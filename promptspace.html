@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="promptApp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- App Title -->
+    <title>PromptSpace - AI Prompt Organizer</title>
+
+    <!-- Tailwind CSS (via CDN for modern utility-first styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome (via CDN for UI icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- AngularJS v1.8.x (via CDN for application logic and data binding) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+    <!-- External Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen" ng-controller="PromptController">
+
+    <!-- Header Navigation -->
+    <header class="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-100">
+        <div
+            class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- App Logo & Title -->
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-indigo-600 text-2xl"></i>
+                <h1
+                    class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                    PromptSpace
+                </h1>
+            </div>
+            <!-- Search Input with two-way binding using ng-model -->
+            <div class="relative w-full sm:w-96 group">
+                <i
+                    class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                <input type="text" ng-model="searchQuery" placeholder="Search prompts by title or keyword..."
+                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Left Sidebar: Add Prompt Form -->
+            <div class="lg:col-span-1">
+                <!-- Sticky wrapper so the form stays visible on scroll -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-28">
+                    <h2 class="text-lg font-bold mb-5 flex items-center gap-2 text-gray-800">
+                        <i class="fa-solid fa-circle-plus text-indigo-500"></i> Add New Prompt
+                    </h2>
+
+                    <!-- ng-submit binds to the addPrompt() controller function -->
+                    <form ng-submit="addPrompt()" class="space-y-4">
+                        <!-- Input: Prompt Title -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Title</label>
+                            <input type="text" ng-model="newPrompt.title" required
+                                placeholder="e.g., Code Review Assistant"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors">
+                        </div>
+
+                        <!-- Select: Category -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                            <select ng-model="newPrompt.category"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors appearance-none">
+                                <option value="Coding">Coding</option>
+                                <option value="Writing">Writing</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Textarea: Prompt Text -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Prompt Text</label>
+                            <textarea ng-model="newPrompt.text" required rows="5"
+                                placeholder="Type your AI prompt here..."
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 focus:bg-white transition-colors resize-none"></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit"
+                            class="w-full bg-indigo-600 text-white font-medium py-2.5 px-4 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200 transition-colors flex justify-center items-center gap-2 mt-2 shadow-sm">
+                            <i class="fa-solid fa-save"></i> Save Prompt
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Area: Prompt Grid Display -->
+            <div class="lg:col-span-3">
+                <!-- Empty State: Shows when the filter yields no results -->
+                <div ng-if="(prompts | filter:searchQuery).length === 0"
+                    class="text-center py-16 bg-white rounded-xl border border-gray-100 border-dashed shadow-sm">
+                    <i class="fa-solid fa-folder-open text-5xl mb-4 text-gray-300"></i>
+                    <h3 class="text-xl font-bold text-gray-700 mb-1">No Prompts Found</h3>
+                    <p class="text-gray-500">Try adjusting your search query.</p>
+                </div>
+
+                <!-- Responsive Grid: 1 col on mobile, 2 col on large tablets, 3 col on large desktops -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                    <!-- ng-repeat iterates through prompts and filters them instantly based on searchQuery -->
+                    <div ng-repeat="prompt in prompts | filter:searchQuery"
+                        class="prompt-card bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 relative group flex flex-col h-full">
+
+                        <!-- Card Header (Badge + Action Icons) -->
+                        <div class="flex justify-between items-start mb-4">
+                            <!-- Category Badge -->
+                            <span
+                                class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider {{getCategoryClass(prompt.category)}}">
+                                {{prompt.category}}
+                            </span>
+
+                            <!-- Desktop Action Buttons (Appear on hover) -->
+                            <div
+                                class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 hidden sm:flex bg-white rounded-md shadow-sm border border-gray-50">
+                                <button ng-click="copyPrompt(prompt.text, $event)"
+                                    class="text-gray-400 hover:text-indigo-600 transition-colors p-1.5 rounded"
+                                    title="Copy Text">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                                <button ng-click="deletePrompt(prompt)"
+                                    class="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded"
+                                    title="Delete Prompt">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Content -->
+                        <h3 class="text-lg font-bold text-gray-800 mb-3 leading-tight">{{prompt.title}}</h3>
+                        <p class="text-gray-600 text-sm flex-grow whitespace-pre-wrap">{{prompt.text}}</p>
+
+                        <!-- Mobile Action Buttons (Always visible on small screens) -->
+                        <div class="mt-5 pt-4 border-t border-gray-50 flex justify-end gap-4 sm:hidden">
+                            <button ng-click="copyPrompt(prompt.text, $event)"
+                                class="text-indigo-600 hover:text-indigo-800 text-sm font-bold flex items-center gap-1.5">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                            <button ng-click="deletePrompt(prompt)"
+                                class="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- External Application Script -->
+    <script src="app.js"></script>
+</body>
+
+</html>
